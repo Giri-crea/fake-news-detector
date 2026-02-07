@@ -13,7 +13,7 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import PassiveAggressiveClassifier
+from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
 # Download required NLTK data
@@ -24,7 +24,7 @@ nltk.download('punkt', quiet=True)
 class FakeNewsModelTrainer:
     def __init__(self):
         self.vectorizer = TfidfVectorizer(max_df=0.7, max_features=10000)
-        self.classifier = PassiveAggressiveClassifier(max_iter=1000, random_state=42)
+        self.classifier = SGDClassifier(loss='hinge', penalty=None, max_iter=1000, random_state=42)
         self.lemmatizer = WordNetLemmatizer()
         self.stop_words = set(stopwords.words('english'))
     
