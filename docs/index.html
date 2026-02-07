@@ -306,34 +306,55 @@
     </div>
 
     <script>
-        // Fake news indicators and patterns
+        // Enhanced fake news detection patterns
         const fakeNewsPatterns = {
             sensationalWords: ['shocking', 'breaking', 'urgent', 'exclusive', 'secret', 'conspiracy', 
                               'miracle', 'cure', 'banned', 'exposed', 'they dont want you to know',
-                              'mainstream media', 'cover up', 'whistleblower', 'leaked', 'bombshell'],
+                              'mainstream media', 'cover up', 'whistleblower', 'leaked', 'bombshell',
+                              'alert', 'warning', 'incredible', 'unreal', 'insane', 'crazy'],
             clickbait: ['you wont believe', 'what happens next', 'doctors hate', 'one weird trick',
-                       'this will shock you', 'mind blowing', 'jaw dropping', 'unbelievable'],
+                       'this will shock you', 'mind blowing', 'jaw dropping', 'unbelievable',
+                       'gone wrong', 'gone viral', 'must see', 'cant miss', 'will blow your mind'],
             unreliableSource: ['according to sources', 'people are saying', 'many believe', 
-                              'it is rumored', 'allegedly', 'some say', 'insiders claim'],
+                              'it is rumored', 'some say', 'insiders claim', 'anonymous sources',
+                              'reports suggest', 'word on the street', 'i heard that'],
             exaggeration: ['always', 'never', 'everyone', 'no one', 'completely', 'totally',
-                          'absolutely', 'definitely', '100%', 'guaranteed', 'proven'],
+                          'absolutely', 'definitely', '100%', 'guaranteed', 'proven', 'all',
+                          'none', 'best ever', 'worst ever', 'first ever', 'only way'],
             emotionalManipulation: ['outrage', 'disgusting', 'horrifying', 'terrifying', 
-                                   'evil', 'destroy', 'attack', 'threat', 'danger', 'fear'],
+                                   'evil', 'destroy', 'attack', 'threat', 'danger', 'fear',
+                                   'scary', 'creepy', 'nightmare', 'horrible', 'awful', 'tragic'],
             conspiracyTerms: ['deep state', 'new world order', 'illuminati', 'chemtrails',
-                             'mind control', 'cover-up', 'hoax', 'false flag', 'plandemic']
+                             'mind control', 'cover-up', 'hoax', 'false flag', 'plandemic',
+                             'big pharma', 'they are hiding', 'wake up', 'sheep', 'sheeple',
+                             'truth they hide', 'government lies', 'media lies', 'dont trust'],
+            fakeScience: ['scientists baffled', 'doctors stunned', 'researchers shocked',
+                         'cure they dont want', 'big pharma hates', 'natural cure',
+                         'ancient secret', 'forbidden knowledge', 'suppressed cure'],
+            urgencyTactics: ['act now', 'limited time', 'before its too late', 'share before deleted',
+                            'going viral', 'spread the word', 'share this', 'must read', 'read before'],
+            politicalBias: ['libtard', 'snowflake', 'nazi', 'fascist', 'communist', 'radical left',
+                           'radical right', 'fake news media', 'lamestream', 'corrupt']
         };
 
         const realNewsPatterns = {
             credibleIndicators: ['according to', 'research shows', 'study finds', 'data indicates',
-                                'experts say', 'officials report', 'investigation reveals'],
+                                'experts say', 'officials report', 'investigation reveals',
+                                'peer reviewed', 'published in', 'university study'],
             balancedLanguage: ['however', 'on the other hand', 'critics argue', 'supporters say',
-                              'while', 'although', 'despite', 'nevertheless'],
+                              'while', 'although', 'despite', 'nevertheless', 'both sides',
+                              'some experts disagree', 'others believe'],
             specificDetails: ['percent', 'million', 'billion', 'according to', 'reported',
-                             'stated', 'confirmed', 'announced']
+                             'stated', 'confirmed', 'announced', 'dated', 'located in'],
+            credibleSources: ['reuters', 'associated press', 'ap news', 'bbc', 'npr', 
+                             'wall street journal', 'new york times', 'washington post',
+                             'scientific american', 'nature', 'science', 'lancet', 'nejm'],
+            professionalTone: ['investigation', 'analysis', 'report', 'statement', 'official',
+                              'spokesperson', 'representative', 'department', 'ministry']
         };
 
         function analyzeNews() {
-            const text = document.getElementById('newsInput').value.trim().toLowerCase();
+            const text = document.getElementById('newsInput').value.trim();
             const resultDiv = document.getElementById('resultSection');
             const loadingDiv = document.getElementById('loading');
 
@@ -345,7 +366,6 @@
             loadingDiv.classList.add('show');
             resultDiv.classList.remove('show');
 
-            // Simulate processing time
             setTimeout(() => {
                 const result = performAnalysis(text);
                 displayResult(result);
@@ -354,15 +374,20 @@
         }
 
         function performAnalysis(text) {
+            const lowerText = text.toLowerCase();
+            const originalText = text;
             let fakeScore = 0;
             let realScore = 0;
             let indicators = [];
 
-            // Check for fake news patterns
+            // Check for fake news patterns with weighted scoring
             for (const [category, patterns] of Object.entries(fakeNewsPatterns)) {
                 for (const pattern of patterns) {
-                    if (text.includes(pattern.toLowerCase())) {
-                        fakeScore += 15;
+                    if (lowerText.includes(pattern.toLowerCase())) {
+                        let weight = 20;
+                        if (category === 'conspiracyTerms' || category === 'fakeScience') weight = 30;
+                        if (category === 'clickbait' || category === 'urgencyTactics') weight = 25;
+                        fakeScore += weight;
                         indicators.push({
                             type: 'warning',
                             text: `Contains "${pattern}" - common in misleading content`
@@ -374,8 +399,11 @@
             // Check for credible indicators
             for (const [category, patterns] of Object.entries(realNewsPatterns)) {
                 for (const pattern of patterns) {
-                    if (text.includes(pattern.toLowerCase())) {
-                        realScore += 10;
+                    if (lowerText.includes(pattern.toLowerCase())) {
+                        let weight = 15;
+                        if (category === 'credibleSources') weight = 25;
+                        if (category === 'credibleIndicators') weight = 20;
+                        realScore += weight;
                         indicators.push({
                             type: 'good',
                             text: `Contains "${pattern}" - common in credible reporting`
@@ -384,82 +412,142 @@
                 }
             }
 
-            // Check for excessive punctuation (!!!, ???, ALL CAPS)
-            const exclamationCount = (text.match(/!/g) || []).length;
-            const questionCount = (text.match(/\?/g) || []).length;
-            const capsRatio = (text.match(/[A-Z]/g) || []).length / text.length;
+            // ALL CAPS detection (check original text)
+            const capsWords = originalText.match(/\b[A-Z]{3,}\b/g) || [];
+            if (capsWords.length > 2) {
+                fakeScore += 25;
+                indicators.push({
+                    type: 'warning',
+                    text: `Multiple ALL CAPS words (${capsWords.length}) - sensationalist tactic`
+                });
+            }
 
-            if (exclamationCount > 3) {
+            // Excessive punctuation
+            const exclamationCount = (text.match(/!/g) || []).length;
+            const questionCount = (text.match(/\?{2,}/g) || []).length;
+            
+            if (exclamationCount > 2) {
                 fakeScore += 20;
                 indicators.push({
                     type: 'warning',
-                    text: 'Excessive exclamation marks - often used in sensationalist content'
+                    text: `Excessive exclamation marks (${exclamationCount}) - sensationalist style`
                 });
             }
 
-            if (capsRatio > 0.3) {
+            if (questionCount > 0) {
                 fakeScore += 15;
                 indicators.push({
                     type: 'warning',
-                    text: 'High ratio of capital letters - may indicate sensationalism'
+                    text: 'Multiple question marks - often used to cast doubt unfairly'
                 });
             }
 
-            // Check text length (very short = potentially clickbait)
-            if (text.length < 100) {
-                fakeScore += 10;
+            // Check for specific date/time (credibility indicator)
+            const hasDate = /\b(january|february|march|april|may|june|july|august|september|october|november|december|\d{1,2}\/\d{1,2}\/\d{2,4}|\d{4})\b/i.test(text);
+            if (hasDate) {
+                realScore += 15;
+                indicators.push({
+                    type: 'good',
+                    text: 'Contains specific dates - suggests factual reporting'
+                });
+            }
+
+            // Check for quotes (journalism indicator)
+            const hasQuotes = /"[^"]{10,}"/.test(text) || /'[^']{10,}'/.test(text);
+            if (hasQuotes) {
+                realScore += 15;
+                indicators.push({
+                    type: 'good',
+                    text: 'Contains direct quotes - professional journalism practice'
+                });
+            }
+
+            // Check text length
+            if (text.length < 80) {
+                fakeScore += 20;
                 indicators.push({
                     type: 'warning',
-                    text: 'Very short text - credible news usually has more details'
+                    text: 'Very short text - may be clickbait headline'
                 });
-            } else if (text.length > 500) {
+            } else if (text.length > 300) {
                 realScore += 10;
                 indicators.push({
                     type: 'good',
-                    text: 'Detailed content - suggests thorough reporting'
+                    text: 'Detailed content with context'
                 });
             }
 
-            // Check for URLs or source mentions
-            if (text.includes('http') || text.includes('www.') || text.includes('.com') || text.includes('.org')) {
-                realScore += 5;
+            // Check for money/prize claims (common in scams)
+            const moneyPattern = /(win|won|winner|prize|lottery|free money|\$\d+,?\d*|claim your)/i;
+            if (moneyPattern.test(text)) {
+                fakeScore += 25;
                 indicators.push({
-                    type: 'good',
-                    text: 'Contains source references'
+                    type: 'warning',
+                    text: 'Contains money/prize claims - common in scams'
                 });
             }
 
-            // Check for numbers/statistics
-            const hasNumbers = /\d+/.test(text);
-            if (hasNumbers) {
-                realScore += 5;
+            // Check for health misinformation patterns
+            const healthMisinfo = /(cure for cancer|cure for covid|miracle cure|doctors don't want|big pharma doesn't|heal yourself|natural remedy that)/i;
+            if (healthMisinfo.test(text)) {
+                fakeScore += 35;
                 indicators.push({
-                    type: 'good',
-                    text: 'Contains specific numbers/statistics'
+                    type: 'warning',
+                    text: 'Contains health misinformation patterns - be very skeptical'
                 });
             }
 
-            // Calculate final score
-            const totalScore = fakeScore + realScore;
+            // Check for celebrity death hoax patterns
+            const deathHoax = /(rip|dead at|passed away|confirmed dead|found dead).*(share|pray|gone too soon)/i;
+            if (deathHoax.test(text)) {
+                fakeScore += 30;
+                indicators.push({
+                    type: 'warning',
+                    text: 'Matches celebrity death hoax pattern'
+                });
+            }
+
+            // Emotional manipulation check
+            const emotionalWords = lowerText.match(/\b(angry|furious|outraged|heartbroken|devastated|thrilled|ecstatic)\b/g) || [];
+            if (emotionalWords.length > 2) {
+                fakeScore += 15;
+                indicators.push({
+                    type: 'warning',
+                    text: 'Heavy emotional language - may be manipulative'
+                });
+            }
+
+            // Calculate final score with bias toward caution
             let confidence, isFake;
+            const totalScore = fakeScore + realScore;
 
             if (totalScore === 0) {
-                confidence = 50;
+                confidence = 55;
                 isFake = false;
                 indicators.push({
                     type: 'neutral',
-                    text: 'No strong indicators found - manual verification recommended'
+                    text: 'No strong indicators - verify with trusted sources'
                 });
             } else {
-                const fakeRatio = fakeScore / (fakeScore + realScore);
-                confidence = Math.round(Math.max(fakeRatio, 1 - fakeRatio) * 100);
-                isFake = fakeRatio > 0.5;
+                const fakeRatio = fakeScore / totalScore;
+                // Bias toward flagging suspicious content
+                isFake = fakeRatio >= 0.4;
+                confidence = Math.round(Math.min(95, Math.max(55, 
+                    isFake ? (fakeRatio * 100) : ((1 - fakeRatio) * 100)
+                )));
             }
 
-            // Limit indicators to top 5
-            indicators = indicators.slice(0, 5);
+            // Sort indicators by type (warnings first)
+            indicators.sort((a, b) => {
+                if (a.type === 'warning' && b.type !== 'warning') return -1;
+                if (a.type !== 'warning' && b.type === 'warning') return 1;
+                return 0;
+            });
 
-            return { isFake, confidence, indicators };
+            // Limit to top 6 indicators
+            indicators = indicators.slice(0, 6);
+
+            return { isFake, confidence, indicators, fakeScore, realScore };
         }
 
         function displayResult(result) {
